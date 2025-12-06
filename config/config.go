@@ -18,11 +18,12 @@ type ServerConfig struct {
 }
 
 type DatabaseConfig struct {
-	DBHost     string `env:"PGHOST,default=localhost"`
-	DBPort     string `env:"PGPORT,default=5432"`
-	DBUser     string `env:"PGUSER,default=testuser"`
-	DBPassword string `env:"PGPASSWORD,default=123456"`
-	DBName     string `env:"PGDATABASE,default=postgres"`
+	PGHost     string `env:"PGHOST,default=localhost"`
+	PGPort     string `env:"PGPORT,default=5432"`
+	PGUser     string `env:"PGUSER,default=testuser"`
+	PGPassword string `env:"PGPASSWORD,default=123456"`
+	PGName     string `env:"PGDATABASE,default=postgres"`
+	SSLMode    string `env:"PGSSLMODE,default=disable"`
 }
 
 func New() (*AppConfig, error) {

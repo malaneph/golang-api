@@ -59,6 +59,17 @@ func (q *Queries) DeleteSubscription(ctx context.Context, id int32) error {
 	return err
 }
 
+const getEarliestStartDateForUser = `-- name: GetEarliestStartDateForUser :one
+SELECT MIN(start_date) FROM subscriptions WHERE user_id = $1
+`
+
+func (q *Queries) GetEarliestStartDateForUser(ctx context.Context, userID string) (interface{}, error) {
+	row := q.db.QueryRow(ctx, getEarliestStartDateForUser, userID)
+	var min interface{}
+	err := row.Scan(&min)
+	return min, err
+}
+
 const getSubscription = `-- name: GetSubscription :one
 
 SELECT id, user_id, service_name, price, start_date, end_date FROM subscriptions WHERE id = $1
@@ -81,33 +92,32 @@ func (q *Queries) GetSubscription(ctx context.Context, id int32) (Subscription, 
 }
 
 const getTotalValueSubscription = `-- name: GetTotalValueSubscription :one
-SELECT SUM(price) FROM subscriptions
+SELECT COALESCE(SUM(price), 0) FROM subscriptions
 WHERE (user_id = $1 OR NOT $5::bool) AND (service_name = $2 OR NOT $6::bool) AND start_date BETWEEN $3 AND $4
-GROUP BY service_name, user_id
 `
 
 type GetTotalValueSubscriptionParams struct {
-	UserID              string           `json:"user_id"`
-	ServiceName         string           `json:"service_name"`
-	StartDate           pgtype.Timestamp `json:"start_date"`
-	StartDate_2         pgtype.Timestamp `json:"start_date_2"`
-	FilterByUserID      bool             `json:"filter_by_user_id"`
-	FilterByServiceName bool             `json:"filter_by_service_name"`
+	UserID      string           `json:"user_id"`
+	ServiceName string           `json:"service_name"`
+	StartDate   pgtype.Timestamp `json:"start_date"`
+	StartDate_2 pgtype.Timestamp `json:"start_date_2"`
+	Column5     bool             `json:"column_5"`
+	Column6     bool             `json:"column_6"`
 }
 
 // http: GET /subscriptions/total-value
-func (q *Queries) GetTotalValueSubscription(ctx context.Context, arg GetTotalValueSubscriptionParams) (int64, error) {
+func (q *Queries) GetTotalValueSubscription(ctx context.Context, arg GetTotalValueSubscriptionParams) (interface{}, error) {
 	row := q.db.QueryRow(ctx, getTotalValueSubscription,
 		arg.UserID,
 		arg.ServiceName,
 		arg.StartDate,
 		arg.StartDate_2,
-		arg.FilterByUserID,
-		arg.FilterByServiceName,
+		arg.Column5,
+		arg.Column6,
 	)
-	var sum int64
-	err := row.Scan(&sum)
-	return sum, err
+	var coalesce interface{}
+	err := row.Scan(&coalesce)
+	return coalesce, err
 }
 
 const listSubscriptions = `-- name: ListSubscriptions :many
@@ -144,28 +154,33 @@ func (q *Queries) ListSubscriptions(ctx context.Context) ([]Subscription, error)
 
 const updateSubscription = `-- name: UpdateSubscription :exec
 UPDATE subscriptions
-SET user_id = $2, service_name = $3, price = $4, start_date = $5, end_date = $6
+SET 
+    user_id = CASE WHEN $2::text IS NOT NULL THEN $2 ELSE user_id END,
+    service_name = CASE WHEN $3::text IS NOT NULL THEN $3 ELSE service_name END,
+    price = CASE WHEN $4::integer IS NOT NULL THEN $4 ELSE price END,
+    start_date = CASE WHEN $5::timestamp IS NOT NULL THEN $5 ELSE start_date END,
+    end_date = CASE WHEN $6::timestamp IS NOT NULL THEN $6 ELSE end_date END
 WHERE id = $1
 `
 
 type UpdateSubscriptionParams struct {
-	ID          int32            `json:"id"`
-	UserID      string           `json:"user_id"`
-	ServiceName string           `json:"service_name"`
-	Price       int32            `json:"price"`
-	StartDate   pgtype.Timestamp `json:"start_date"`
-	EndDate     pgtype.Timestamp `json:"end_date"`
+	ID      int32            `json:"id"`
+	Column2 string           `json:"column_2"`
+	Column3 string           `json:"column_3"`
+	Column4 int32            `json:"column_4"`
+	Column5 pgtype.Timestamp `json:"column_5"`
+	Column6 pgtype.Timestamp `json:"column_6"`
 }
 
 // http: PATCH /subscriptions/:id
 func (q *Queries) UpdateSubscription(ctx context.Context, arg UpdateSubscriptionParams) error {
 	_, err := q.db.Exec(ctx, updateSubscription,
 		arg.ID,
-		arg.UserID,
-		arg.ServiceName,
-		arg.Price,
-		arg.StartDate,
-		arg.EndDate,
+		arg.Column2,
+		arg.Column3,
+		arg.Column4,
+		arg.Column5,
+		arg.Column6,
 	)
 	return err
 }

@@ -13,11 +13,12 @@ type Querier interface {
 	CreateSubscription(ctx context.Context, arg CreateSubscriptionParams) (Subscription, error)
 	// http: DELETE /subscriptions/:id
 	DeleteSubscription(ctx context.Context, id int32) error
+	GetEarliestStartDateForUser(ctx context.Context, userID string) (interface{}, error)
 	// subscriptions.sql
 	// http: GET /subscriptions/:id
 	GetSubscription(ctx context.Context, id int32) (Subscription, error)
 	// http: GET /subscriptions/total-value
-	GetTotalValueSubscription(ctx context.Context, arg GetTotalValueSubscriptionParams) (int64, error)
+	GetTotalValueSubscription(ctx context.Context, arg GetTotalValueSubscriptionParams) (interface{}, error)
 	// http: GET /subscriptions
 	ListSubscriptions(ctx context.Context) ([]Subscription, error)
 	// http: PATCH /subscriptions/:id
