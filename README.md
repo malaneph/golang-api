@@ -1,6 +1,6 @@
 # Golang API
-[![ENG]](https://github.com/malaneph/golang-api/blob/master/README.en.md)
-[![RUS]](https://github.com/malaneph/golang-api/blob/master/README.md)
+[[ENG]](https://github.com/malaneph/golang-api/blob/master/README.en.md)
+[[RUS]](https://github.com/malaneph/golang-api/blob/master/README.md)
 
 Проект-пример REST API сервиса для агрегации данных о онлайн-подписках пользователей на Golang
 
